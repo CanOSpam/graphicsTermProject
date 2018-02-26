@@ -20,6 +20,7 @@ namespace asgn5v1
         // basic data for Transformer
         double xShapeCenter = 0;
         double yShapeCenter = 0;
+        double zShapeCenter = 0;
         double xScreenCenter = 0;
         double yScreenCenter = 0;
         double shapeWidth = 0;
@@ -338,7 +339,7 @@ namespace asgn5v1
 			Graphics grfx = pea.Graphics;
          Pen pen = new Pen(Color.White, 3);
 			double temp;
-			int k;
+            int k;
 
             if (gooddata)
             {
@@ -357,13 +358,13 @@ namespace asgn5v1
                 }
 
                 //now draw the lines
-
+                pen.Color = Color.White;
+                pen.Width = 3;
                 for (int i = 0; i < numlines; i++)
                 {
                     grfx.DrawLine(pen, (int)scrnpts[lines[i, 0], 0], (int)scrnpts[lines[i, 0], 1],
                         (int)scrnpts[lines[i, 1], 0], (int)scrnpts[lines[i, 1], 1]);
                 }
-
 
             } // end of gooddata block	
 		} // end of OnPaint
@@ -492,37 +493,33 @@ namespace asgn5v1
             }
             shapeHeight = shapeYMax - shapeYMin;
 
-            //top left to 0, 0
-            double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -shapeXMin/10, -shapeYMax/10, 0, 1 } };
-            //vertices = multiplyMatrices(vertices, originMatrix);
+          
+            double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -vertices[0, 0]/10, -vertices[0, 1]/10, -vertices[0, 2] / 10, 1 } };
+            vertices = multiplyMatrices(vertices, originMatrix);
 
-            Console.WriteLine("origin x: {0}, origin y: {1}", shapeXMin, shapeYMin);
+            Console.WriteLine("origin x: {0}, origin y: {1}", vertices[0, 0], vertices[0, 1]);
             double[,] identity = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
             Console.WriteLine("Screen W: {0}, H: {1}", Width, Height);
             Console.WriteLine("shape Width: {0}, shape Height: {1}", shapeWidth, shapeHeight);
-            //Translate to origin
-            double[,] centerMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -((shapeWidth/2.0) / 10.0), -((shapeHeight/2.0) / 10.0), 0, 1 } };
-            //vertices = multiplyMatrices(vertices, centerMatrix);
-            Console.WriteLine("origin x: {0}, origin y: {1}", vertices[0, 0], vertices[0, 1]);
 
             //Flip
             double[,] flipXMatrix = { { 1, 0, 0, 0 }, { 0, -1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-            //vertices = multiplyMatrices(vertices, flipXMatrix);
+            vertices = multiplyMatrices(vertices, flipXMatrix);
 
             //Scale up
             double scaleFactor = ((Height) / shapeHeight);
             scaleFactor *= (2.0/3.0);
 
             double[,] scaleUp = { { scaleFactor, 0, 0, 0 }, { 0, scaleFactor, 0, 0 }, { 0, 0, scaleFactor, 0 }, { 0, 0, 0, 1 } };
-            //vertices = multiplyMatrices(vertices, scaleUp);
+            vertices = multiplyMatrices(vertices, scaleUp);
             shapeHeight *= scaleFactor;
             shapeWidth *= scaleFactor;
 
             //Translate to center
-            double[,] translateToCenter = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { xScreenCenter / 10.0, yScreenCenter / 10.0, 0, 1 } };
-            //vertices = multiplyMatrices(vertices, translateToCenter);
-            xShapeCenter = xScreenCenter;
-            yShapeCenter = yScreenCenter;
+            double[,] translateToCenter = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { xScreenCenter / 10, yScreenCenter / 10, 0, 1 } };
+            vertices = multiplyMatrices(vertices, translateToCenter);
+            xShapeCenter += xScreenCenter;
+            yShapeCenter += yScreenCenter;
 
         }// end of DecodeCoords
 
@@ -562,18 +559,21 @@ namespace asgn5v1
 			if (e.Button == transleftbtn)
 			{
                 double[,] leftShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -7.5, 0, 0, 1 } };
+                xShapeCenter -= 75;
                 vertices = multiplyMatrices(vertices, leftShift);
                 Refresh();
 			}
 			if (e.Button == transrightbtn) 
 			{
                 double[,] rightShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 7.5, 0, 0, 1 } };
+                xShapeCenter += 75;
                 vertices = multiplyMatrices(vertices, rightShift);
                 Refresh();
 			}
 			if (e.Button == transupbtn)
 			{
                 double[,] upShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, -3.5, 0, 1 } };
+                yShapeCenter -= 35;
                 vertices = multiplyMatrices(vertices, upShift);
                 Refresh();
 			}
@@ -581,6 +581,7 @@ namespace asgn5v1
 			if(e.Button == transdownbtn)
 			{
                 double[,] downShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 3.5, 0, 1 } };
+                yShapeCenter += 35;
                 vertices = multiplyMatrices(vertices, downShift);
                 Refresh();
 			}
@@ -600,10 +601,7 @@ namespace asgn5v1
 
                 shapeHeight *= 1.1;
                 shapeWidth *= 1.1;
-
-                //get new center
-                xShapeCenter = vertices[0, 0] + (shapeWidth / 2.0);
-                yShapeCenter = vertices[0, 1] + (shapeHeight / 2.0);
+                
                 Console.WriteLine("Shape Width: {0}, Shape Height: {1}", shapeWidth, shapeHeight);
                 Refresh();
 			}
@@ -623,25 +621,54 @@ namespace asgn5v1
 
                 shapeHeight *= 0.9;
                 shapeWidth *= 0.9;
-
-                //get new center
-                xShapeCenter = vertices[0, 0] + (shapeWidth / 2.0);
-                yShapeCenter = vertices[0, 1] + (shapeHeight / 2.0);
-                Console.WriteLine("Shape Width: {0}, Shape Height: {1}", shapeWidth, shapeHeight);
+                
                 Refresh();
 			}
 			if (e.Button == rotxby1btn) 
 			{
-				
-			}
+                //origin
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                vertices = multiplyMatrices(vertices, originMatrix);
+
+                //rotate
+                double[,] rotX = { { Math.Cos(0.09), Math.Sin(0.09), 0, 0 }, { -Math.Sin(0.09), Math.Cos(0.09), 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                vertices = multiplyMatrices(vertices, rotX);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                vertices = multiplyMatrices(vertices, returnMatrix);
+                Refresh();
+            }
 			if (e.Button == rotyby1btn) 
 			{
-				
-			}
+                //origin
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                vertices = multiplyMatrices(vertices, originMatrix);
+
+                //rotate
+                double[,] rotY = { { Math.Cos(0.09), 0, -Math.Sin(0.09), 0 }, { 0, 1, 0, 0 }, { Math.Sin(0.09), 0, Math.Cos(0.09), 0 }, { 0, 0, 0, 1 } };
+                vertices = multiplyMatrices(vertices, rotY);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                vertices = multiplyMatrices(vertices, returnMatrix);
+                Refresh();
+            }
 			if (e.Button == rotzby1btn) 
 			{
-				
-			}
+                //origin
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                vertices = multiplyMatrices(vertices, originMatrix);
+
+                //rotate
+                double[,] rotZ = { { 1, 0, 0, 0 }, { 0, Math.Cos(0.09), Math.Sin(0.09), 0 }, { 0, -Math.Sin(0.09), Math.Cos(0.09), 0 }, { 0, 0, 0, 1 } };
+                vertices = multiplyMatrices(vertices, rotZ);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                vertices = multiplyMatrices(vertices, returnMatrix);
+                Refresh();
+            }
 
 			if (e.Button == rotxbtn) 
 			{
