@@ -18,6 +18,7 @@ namespace asgn5v1
         //private bool GetNewData();
 
         // basic data for Transformer
+        Timer timer = new Timer();
         double xShapeCenter = 0;
         double yShapeCenter = 0;
         double zShapeCenter = 0;
@@ -25,6 +26,7 @@ namespace asgn5v1
         double yScreenCenter = 0;
         double shapeWidth = 0;
         double shapeHeight = 0;
+        int rotDir = 0;
         int numpts = 0;
 		int numlines = 0;
 		bool gooddata = false;		
@@ -83,8 +85,9 @@ namespace asgn5v1
 				new EventHandler(MenuAboutOnClick));
 			Menu = new MainMenu(new MenuItem[] {miFile, miAbout});
 
-			
-		}
+            timer.Tick += new EventHandler(timer_Tick);
+            timer.Interval = 16;
+        }
 
 		/// <summary>
 		/// Clean up any resources being used.
@@ -389,7 +392,70 @@ namespace asgn5v1
 
 		void RestoreInitialImage()
 		{
-			Invalidate();
+            xScreenCenter = Width / 2;
+            yScreenCenter = Height / 2;
+
+            double shapeXMin = 0;
+            double shapeXMax = 0;
+
+            double shapeYMin = 0;
+            double shapeYMax = 0;
+
+            for (int i = 0; i < vertices.GetLength(0); i++)
+            {
+                if (shapeXMax < vertices[i, 0])
+                {
+                    shapeXMax = vertices[i, 0];
+                }
+                if (shapeXMin > vertices[i, 0])
+                {
+                    shapeXMin = vertices[i, 0];
+                }
+            }
+            shapeWidth = shapeXMax - shapeXMin;
+
+            for (int i = 0; i < vertices.GetLength(0); i++)
+            {
+                if (shapeYMax < vertices[i, 1])
+                {
+                    shapeYMax = vertices[i, 1];
+                }
+                if (shapeYMin > vertices[i, 1])
+                {
+                    shapeYMin = vertices[i, 1];
+                }
+            }
+            shapeHeight = shapeYMax - shapeYMin;
+
+
+            double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -vertices[0, 0] / 10, -vertices[0, 1] / 10, -vertices[0, 2] / 10, 1 } };
+            ctrans = multiplyMatrices(ctrans, originMatrix);
+
+            xShapeCenter = vertices[0, 0];
+            yShapeCenter = vertices[0, 1];
+
+            double[,] identity = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+
+            //Flip
+            double[,] flipXMatrix = { { 1, 0, 0, 0 }, { 0, -1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+            ctrans = multiplyMatrices(ctrans, flipXMatrix);
+
+            //Scale up
+            double scaleFactor = ((Height) / shapeHeight);
+            scaleFactor *= (1.0 / 2.0);
+
+            double[,] scaleUp = { { scaleFactor, 0, 0, 0 }, { 0, scaleFactor, 0, 0 }, { 0, 0, scaleFactor, 0 }, { 0, 0, 0, 1 } };
+            ctrans = multiplyMatrices(ctrans, scaleUp);
+            shapeHeight *= scaleFactor;
+            shapeWidth *= scaleFactor;
+
+            //Translate to center
+            double[,] translateToCenter = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { xScreenCenter / 10, yScreenCenter / 10, 0, 1 } };
+            ctrans = multiplyMatrices(ctrans, translateToCenter);
+            xShapeCenter += xScreenCenter;
+            yShapeCenter += yScreenCenter;
+
+            Invalidate();
 		} // end of RestoreInitialImage
 
 		bool GetNewData()
@@ -458,68 +524,7 @@ namespace asgn5v1
                 vertices[numpts,3] = 1.0d * 10;
 				numpts++;						
 			}
-            xScreenCenter = Width / 2;
-            yScreenCenter = Height / 2;
-
-            double shapeXMin = 0;
-            double shapeXMax = 0;
-
-            double shapeYMin = 0;
-            double shapeYMax = 0;
-
-            for (int i = 0; i < vertices.GetLength(0); i++)
-            {
-                if(shapeXMax < vertices[i, 0])
-                {
-                    shapeXMax = vertices[i, 0];
-                }
-                if (shapeXMin > vertices[i, 0])
-                {
-                    shapeXMin = vertices[i, 0];
-                }
-            }
-            shapeWidth = shapeXMax - shapeXMin;
-
-            for (int i = 0; i < vertices.GetLength(0); i++)
-            {
-                if (shapeYMax < vertices[i, 1])
-                {
-                    shapeYMax = vertices[i, 1];
-                }
-                if (shapeYMin > vertices[i, 1])
-                {
-                    shapeYMin = vertices[i, 1];
-                }
-            }
-            shapeHeight = shapeYMax - shapeYMin;
-
-          
-            double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -vertices[0, 0]/10, -vertices[0, 1]/10, -vertices[0, 2] / 10, 1 } };
-            vertices = multiplyMatrices(vertices, originMatrix);
-
-            Console.WriteLine("origin x: {0}, origin y: {1}", vertices[0, 0], vertices[0, 1]);
-            double[,] identity = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-            Console.WriteLine("Screen W: {0}, H: {1}", Width, Height);
-            Console.WriteLine("shape Width: {0}, shape Height: {1}", shapeWidth, shapeHeight);
-
-            //Flip
-            double[,] flipXMatrix = { { 1, 0, 0, 0 }, { 0, -1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-            vertices = multiplyMatrices(vertices, flipXMatrix);
-
-            //Scale up
-            double scaleFactor = ((Height) / shapeHeight);
-            scaleFactor *= (2.0/3.0);
-
-            double[,] scaleUp = { { scaleFactor, 0, 0, 0 }, { 0, scaleFactor, 0, 0 }, { 0, 0, scaleFactor, 0 }, { 0, 0, 0, 1 } };
-            vertices = multiplyMatrices(vertices, scaleUp);
-            shapeHeight *= scaleFactor;
-            shapeWidth *= scaleFactor;
-
-            //Translate to center
-            double[,] translateToCenter = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { xScreenCenter / 10, yScreenCenter / 10, 0, 1 } };
-            vertices = multiplyMatrices(vertices, translateToCenter);
-            xShapeCenter += xScreenCenter;
-            yShapeCenter += yScreenCenter;
+            
 
         }// end of DecodeCoords
 
@@ -558,46 +563,51 @@ namespace asgn5v1
 		{
 			if (e.Button == transleftbtn)
 			{
+                rotDir = 0;
                 double[,] leftShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -7.5, 0, 0, 1 } };
                 xShapeCenter -= 75;
-                vertices = multiplyMatrices(vertices, leftShift);
+                ctrans = multiplyMatrices(ctrans, leftShift);
                 Refresh();
 			}
 			if (e.Button == transrightbtn) 
 			{
+                rotDir = 0;
                 double[,] rightShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 7.5, 0, 0, 1 } };
                 xShapeCenter += 75;
-                vertices = multiplyMatrices(vertices, rightShift);
+                ctrans = multiplyMatrices(ctrans, rightShift);
                 Refresh();
 			}
 			if (e.Button == transupbtn)
 			{
+                rotDir = 0;
                 double[,] upShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, -3.5, 0, 1 } };
                 yShapeCenter -= 35;
-                vertices = multiplyMatrices(vertices, upShift);
+                ctrans = multiplyMatrices(ctrans, upShift);
                 Refresh();
 			}
 			
 			if(e.Button == transdownbtn)
 			{
+                rotDir = 0;
                 double[,] downShift = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 3.5, 0, 1 } };
                 yShapeCenter += 35;
-                vertices = multiplyMatrices(vertices, downShift);
+                ctrans = multiplyMatrices(ctrans, downShift);
                 Refresh();
 			}
 			if (e.Button == scaleupbtn) 
 			{
+                rotDir = 0;
                 //origin
                 double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, originMatrix);
+                ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //scale
                 double[,] scaleUp = { { 1.1, 0, 0, 0 }, { 0, 1.1, 0, 0 }, { 0, 0, 1.1, 0 }, { 0, 0, 0, 1 } };
-                vertices = multiplyMatrices(vertices, scaleUp);
+                ctrans = multiplyMatrices(ctrans, scaleUp);
 
                 //return
                 double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, returnMatrix);
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
 
                 shapeHeight *= 1.1;
                 shapeWidth *= 1.1;
@@ -607,17 +617,18 @@ namespace asgn5v1
 			}
 			if (e.Button == scaledownbtn) 
 			{
+                rotDir = 0;
                 //origin
                 double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, originMatrix);
+                ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //scale
                 double[,] scaleDown = { { 0.9, 0, 0, 0 }, { 0, 0.9, 0, 0 }, { 0, 0, 0.9, 0 }, { 0, 0, 0, 1 } };
-                vertices = multiplyMatrices(vertices, scaleDown);
+                ctrans = multiplyMatrices(ctrans, scaleDown);
 
                 //return
                 double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, returnMatrix);
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
 
                 shapeHeight *= 0.9;
                 shapeWidth *= 0.9;
@@ -626,76 +637,105 @@ namespace asgn5v1
 			}
 			if (e.Button == rotxby1btn) 
 			{
+                rotDir = 0;
                 //origin
                 double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, originMatrix);
+                ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //rotate
                 double[,] rotX = { { Math.Cos(0.09), Math.Sin(0.09), 0, 0 }, { -Math.Sin(0.09), Math.Cos(0.09), 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-                vertices = multiplyMatrices(vertices, rotX);
+                ctrans = multiplyMatrices(ctrans, rotX);
 
                 //return
                 double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, returnMatrix);
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
                 Refresh();
             }
 			if (e.Button == rotyby1btn) 
 			{
+                rotDir = 0;
                 //origin
                 double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, originMatrix);
+                ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //rotate
                 double[,] rotY = { { Math.Cos(0.09), 0, -Math.Sin(0.09), 0 }, { 0, 1, 0, 0 }, { Math.Sin(0.09), 0, Math.Cos(0.09), 0 }, { 0, 0, 0, 1 } };
-                vertices = multiplyMatrices(vertices, rotY);
+                ctrans = multiplyMatrices(ctrans, rotY);
 
                 //return
                 double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, returnMatrix);
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
                 Refresh();
             }
 			if (e.Button == rotzby1btn) 
 			{
+                rotDir = 0;
                 //origin
                 double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, originMatrix);
+                ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //rotate
                 double[,] rotZ = { { 1, 0, 0, 0 }, { 0, Math.Cos(0.09), Math.Sin(0.09), 0 }, { 0, -Math.Sin(0.09), Math.Cos(0.09), 0 }, { 0, 0, 0, 1 } };
-                vertices = multiplyMatrices(vertices, rotZ);
+                ctrans = multiplyMatrices(ctrans, rotZ);
 
                 //return
                 double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
-                vertices = multiplyMatrices(vertices, returnMatrix);
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
                 Refresh();
             }
 
 			if (e.Button == rotxbtn) 
 			{
-				
+                rotDir = 1;
+                timer.Start();
 			}
 			if (e.Button == rotybtn) 
 			{
-				
-			}
+                rotDir = 2;
+                timer.Start();
+            }
 			
 			if (e.Button == rotzbtn) 
 			{
-				
-			}
+                rotDir = 3;
+                timer.Start();
+            }
 
 			if(e.Button == shearleftbtn)
 			{
-				Refresh();
+                rotDir = 0;
+                //origin
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, originMatrix);
+
+                //Move up half shape
+                double[,] centerMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, originMatrix);
+
+                //rotate
+                double[,] shear = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, shear);
+
+                //Move down half shape
+                double[,] unCenterMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, originMatrix);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
+                Refresh();
 			}
 
 			if (e.Button == shearrightbtn) 
 			{
-				Refresh();
+                rotDir = 0;
+                Refresh();
 			}
 
 			if (e.Button == resetbtn)
 			{
+                rotDir = 0;
+                setIdentity(ctrans, 4, 4);
 				RestoreInitialImage();
 			}
 
@@ -721,6 +761,57 @@ namespace asgn5v1
             }
 
             return result;
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            if(rotDir == 1)
+            {
+                //origin
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, originMatrix);
+
+                //rotate
+                double[,] rotX = { { Math.Cos(0.05), Math.Sin(0.05), 0, 0 }, { -Math.Sin(0.05), Math.Cos(0.05), 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, rotX);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
+            }
+            else if(rotDir == 2)
+            {
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, originMatrix);
+
+                //rotate
+                double[,] rotY = { { Math.Cos(0.05), 0, -Math.Sin(0.05), 0 }, { 0, 1, 0, 0 }, { Math.Sin(0.05), 0, Math.Cos(0.05), 0 }, { 0, 0, 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, rotY);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
+            }
+            else if (rotDir == 3)
+            {
+                //origin
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, originMatrix);
+
+                //rotate
+                double[,] rotZ = { { 1, 0, 0, 0 }, { 0, Math.Cos(0.05), Math.Sin(0.05), 0 }, { 0, -Math.Sin(0.05), Math.Cos(0.05), 0 }, { 0, 0, 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, rotZ);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
+            }
+            else
+            {
+                timer.Stop();
+            }
+
+            Invalidate();
         }
 
 
