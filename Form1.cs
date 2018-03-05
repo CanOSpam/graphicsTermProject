@@ -709,16 +709,16 @@ namespace asgn5v1
                 ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //Move up half shape
-                double[,] centerMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-                ctrans = multiplyMatrices(ctrans, originMatrix);
+                double[,] centerMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, -((shapeHeight / 2.0) / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, centerMatrix);
 
-                //rotate
-                double[,] shear = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                //shear
+                double[,] shear = { { 1, 0, 0, 0 }, { 0.1, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
                 ctrans = multiplyMatrices(ctrans, shear);
 
                 //Move down half shape
-                double[,] unCenterMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-                ctrans = multiplyMatrices(ctrans, originMatrix);
+                double[,] unCenterMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, ((shapeHeight / 2.0) / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, unCenterMatrix);
 
                 //return
                 double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
@@ -729,8 +729,27 @@ namespace asgn5v1
 			if (e.Button == shearrightbtn) 
 			{
                 rotDir = 0;
+                //origin
+                double[,] originMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { -(xShapeCenter / 10.0), -(yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, originMatrix);
+
+                //Move up half shape
+                double[,] centerMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, -((shapeHeight / 2.0) / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, centerMatrix);
+
+                //shear
+                double[,] shear = { { 1, 0, 0, 0 }, { -0.1, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, shear);
+
+                //Move down half shape
+                double[,] unCenterMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, ((shapeHeight / 2.0) / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, unCenterMatrix);
+
+                //return
+                double[,] returnMatrix = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { (xShapeCenter / 10.0), (yShapeCenter / 10.0), 0, 1 } };
+                ctrans = multiplyMatrices(ctrans, returnMatrix);
                 Refresh();
-			}
+            }
 
 			if (e.Button == resetbtn)
 			{
@@ -772,7 +791,7 @@ namespace asgn5v1
                 ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //rotate
-                double[,] rotX = { { Math.Cos(0.05), Math.Sin(0.05), 0, 0 }, { -Math.Sin(0.05), Math.Cos(0.05), 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
+                double[,] rotX = { { Math.Cos(0.04), Math.Sin(0.04), 0, 0 }, { -Math.Sin(0.04), Math.Cos(0.04), 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
                 ctrans = multiplyMatrices(ctrans, rotX);
 
                 //return
@@ -785,7 +804,7 @@ namespace asgn5v1
                 ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //rotate
-                double[,] rotY = { { Math.Cos(0.05), 0, -Math.Sin(0.05), 0 }, { 0, 1, 0, 0 }, { Math.Sin(0.05), 0, Math.Cos(0.05), 0 }, { 0, 0, 0, 1 } };
+                double[,] rotY = { { Math.Cos(0.04), 0, -Math.Sin(0.04), 0 }, { 0, 1, 0, 0 }, { Math.Sin(0.04), 0, Math.Cos(0.04), 0 }, { 0, 0, 0, 1 } };
                 ctrans = multiplyMatrices(ctrans, rotY);
 
                 //return
@@ -799,7 +818,7 @@ namespace asgn5v1
                 ctrans = multiplyMatrices(ctrans, originMatrix);
 
                 //rotate
-                double[,] rotZ = { { 1, 0, 0, 0 }, { 0, Math.Cos(0.05), Math.Sin(0.05), 0 }, { 0, -Math.Sin(0.05), Math.Cos(0.05), 0 }, { 0, 0, 0, 1 } };
+                double[,] rotZ = { { 1, 0, 0, 0 }, { 0, Math.Cos(0.04), Math.Sin(0.04), 0 }, { 0, -Math.Sin(0.04), Math.Cos(0.04), 0 }, { 0, 0, 0, 1 } };
                 ctrans = multiplyMatrices(ctrans, rotZ);
 
                 //return
